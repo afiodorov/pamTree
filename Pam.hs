@@ -6,7 +6,10 @@ runModel :: BinTree a -> BinTree a -> BinTree a
 runModel init potential = potential
 
 sumNeighs ::  (Num a) => BinTree a -> BinTree a
-sumNeighs t = getSum <$> mconcatNeighs' mempty (fmap Sum t)
+sumNeighs = (getSum <$>) . mconcatNeighs . (Sum <$>)
+
+mconcatNeighs :: (Monoid a) => BinTree a -> BinTree a
+mconcatNeighs = mconcatNeighs' mempty
 
 mconcatNeighs' :: (Monoid a) => a -> BinTree a -> BinTree a
 mconcatNeighs' parentVal Empty = Empty

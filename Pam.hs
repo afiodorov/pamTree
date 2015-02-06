@@ -19,5 +19,5 @@ mconcatNeighs' parentVal (Node x l r) = Node
 
 main :: IO ()
 main = do
-    print . sumNeighs . subTree 5 $ treeFromList [0 ..]
-    print . subTree 5 $ treeFromList [0 ..]
+    print . subTree 5 . sumNeighs $ treeFromList [7 ..]
+    print . subTree 5 $ treeFromList [7 ..]

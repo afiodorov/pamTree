@@ -2,11 +2,13 @@ import BinTree (BinTree (Node, Empty), treeFromList, subTree)
 import Data.Monoid
 import Control.Applicative
 
-runModel :: BinTree a -> BinTree a -> BinTree a
-runModel init potential = potential
-
+-- replace each Node with a sum of its neighboors
 sumNeighs ::  (Num a) => BinTree a -> BinTree a
 sumNeighs = (getSum <$>) . mconcatNeighs . (Sum <$>)
+
+-- replace each Node with a product of its neighboors
+productNeighs ::  (Num a) => BinTree a -> BinTree a
+productNeighs = (getProduct <$>) . mconcatNeighs . (Product <$>)
 
 mconcatNeighs :: (Monoid a) => BinTree a -> BinTree a
 mconcatNeighs = mconcatNeighs' mempty
@@ -20,7 +22,15 @@ mconcatNeighs' parentVal (Node x l r) = Node
         nodeVal (Node x _ _) = x
         nodeVal Empty = mempty
 
+runTimeStep :: (Num a) => BinTree a -> BinTree a -> BinTree a
+runTimeStep potential t = (+) <$> potTimest <*> sumNeighs t
+    where potTimest = (*) <$> potential <*> t
+
+potential = treeFromList [2 ..]
+initial = treeFromList $ 1 : repeat 0
+
+runModel :: (Num a) => Int -> BinTree a -> BinTree a -> BinTree a
+runModel times potential  = foldr (.) id (replicate times (runTimeStep potential))
+
 main :: IO ()
-main = do
-    print . subTree 5 . sumNeighs $ treeFromList [7 ..]
-    print . subTree 5 $ treeFromList [7 ..]
+main = print . subTree 7 $ runModel 7 potential initial

@@ -7,12 +7,18 @@ import Data.Random.Distribution.Uniform (uniform)
 import Control.Monad.Random.Class (MonadRandom)
 import Control.Monad.ST
 import Control.Monad.Random (getStdGen)
+import Control.Applicative
 
 data BinTree a = Empty | Node a (BinTree a) (BinTree a)
 
 instance Functor BinTree where
     fmap _ Empty = Empty
     fmap f (Node a left right) = Node (f a) (fmap f left) (fmap f right)
+
+instance Applicative BinTree where
+    pure = treeFromList . repeat
+    (Node f _ _) <*> Empty = Empty
+    (Node f fl fr) <*>  (Node x l r) = Node (f x) (fl <*> l) (fr <*> r)
 
 split :: [a] -> ([a], [a])
 split [] = ([], [])

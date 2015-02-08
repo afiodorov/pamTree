@@ -43,8 +43,8 @@ weibull :: Double -> RVar Double
 weibull k = (**(1/k)) <$> exponential 1
 
 distribution = weibull 3
-treeSize = 5
-modelRunNum = 10
+treeSize = 7
+modelRunNum = 30
 
 main :: IO ()
 main = do

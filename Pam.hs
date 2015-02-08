@@ -27,24 +27,28 @@ mconcatNeighs' parentVal (Node x l r) = Node
         nodeVal (Node x _ _) = x
         nodeVal Empty = mempty
 
-runTimeStep :: (Num a) => BinTree a -> BinTree a -> BinTree a
-runTimeStep potential t = (+) <$> rescaledByPotential <*> sumNeighs t
-    where rescaledByPotential = (*) <$> potential <*> t
+runTimeStep :: (Fractional a) => BinTree a -> BinTree a -> BinTree a
+runTimeStep potential t = (+) <$> delta <*> t
+    where
+        delta = (*timeStep) <$> ((+) <$> rescaledByPotential <*> sumNeighs t)
+            where rescaledByPotential = (*) <$> potential <*> t
+        timeStep = 0.1
 
 initial = treeFromList $ 1 : repeat 0
 
-runModel :: (Num a) => Int -> BinTree a -> BinTree a -> BinTree a
+runModel :: (Fractional a) => Int -> BinTree a -> BinTree a -> BinTree a
 runModel times potential  = foldr (.) id (replicate times (runTimeStep potential))
 
 weibull :: Double -> RVar Double
 weibull k = (**(1/k)) <$> exponential 1
 
 distribution = weibull 3
-treeSize = 4
+treeSize = 5
+modelRunNum = 10
 
 main :: IO ()
 main = do
-    potential <- sequence . subTree treeSize
+    potentialTree <- sequence . subTree treeSize
         . treeFromList . repeat $ (sample distribution :: IO Double)
-    print . subTree treeSize $ potential
-    print . subTree treeSize $ runModel 15 potential initial
+    print . subTree treeSize $ potentialTree
+    print . subTree treeSize $ runModel modelRunNum potentialTree initial

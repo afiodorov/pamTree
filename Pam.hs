@@ -1,14 +1,17 @@
 import BinTree (BinTree (Node, Empty), treeFromList, subTree)
 import Data.Monoid
 import Control.Applicative
+import Control.Monad.IO.Class
+import Data.Random.RVar
+import Data.Random.Distribution.Uniform (stdUniform)
+import Data.Random.Sample (sample)
+import Data.Random.Source.IO
+import Data.Traversable (sequence)
+import Prelude hiding (sequence)
 
 -- replace each Node with a sum of its neighboors
 sumNeighs ::  (Num a) => BinTree a -> BinTree a
 sumNeighs = (getSum <$>) . mconcatNeighs . (Sum <$>)
-
--- replace each Node with a product of its neighboors
-productNeighs ::  (Num a) => BinTree a -> BinTree a
-productNeighs = (getProduct <$>) . mconcatNeighs . (Product <$>)
 
 mconcatNeighs :: (Monoid a) => BinTree a -> BinTree a
 mconcatNeighs = mconcatNeighs' mempty
@@ -23,14 +26,16 @@ mconcatNeighs' parentVal (Node x l r) = Node
         nodeVal Empty = mempty
 
 runTimeStep :: (Num a) => BinTree a -> BinTree a -> BinTree a
-runTimeStep potential t = (+) <$> potTimest <*> sumNeighs t
-    where potTimest = (*) <$> potential <*> t
+runTimeStep potential t = (+) <$> rescaledByPotential <*> sumNeighs t
+    where rescaledByPotential = (*) <$> potential <*> t
 
-potential = treeFromList [2 ..]
 initial = treeFromList $ 1 : repeat 0
 
 runModel :: (Num a) => Int -> BinTree a -> BinTree a -> BinTree a
 runModel times potential  = foldr (.) id (replicate times (runTimeStep potential))
 
 main :: IO ()
-main = print . subTree 7 $ runModel 7 potential initial
+main = do
+    potential <- sequence . subTree 10  . treeFromList $ (repeat (sample stdUniform) :: [IO Double])
+    print . subTree 2 $ potential
+    print . subTree 2 $ runModel 15 potential initial

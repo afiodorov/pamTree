@@ -8,17 +8,27 @@ import Control.Monad.Random.Class (MonadRandom)
 import Control.Monad.ST
 import Control.Monad.Random (getStdGen)
 import Control.Applicative
+import Data.Traversable
+import Data.Foldable
+import Data.Monoid
 
 data BinTree a = Empty | Node a (BinTree a) (BinTree a)
 
 instance Functor BinTree where
-    fmap _ Empty = Empty
-    fmap f (Node a left right) = Node (f a) (fmap f left) (fmap f right)
+    fmap = fmapDefault
 
 instance Applicative BinTree where
     pure = treeFromList . repeat
-    (Node f _ _) <*> Empty = Empty
+    _ <*> Empty = Empty
+    Empty <*> _ = Empty
     (Node f fl fr) <*>  (Node x l r) = Node (f x) (fl <*> l) (fr <*> r)
+
+instance Foldable BinTree where
+    foldMap = foldMapDefault
+
+instance Traversable BinTree where
+    traverse f Empty = pure Empty
+    traverse f  (Node x l r) = Node <$> f x <*> traverse f l <*> traverse f r
 
 split :: [a] -> ([a], [a])
 split [] = ([], [])
@@ -63,9 +73,10 @@ listFromTree tree = bf [tree]
     where
         bf :: [BinTree a] -> [a]
         bf [] = []
-        bf xs = map nodeValue xs ++ bf (concatMap children xs)
+        bf xs = map nodeValue xs ++ bf (Prelude.concatMap children xs)
         nodeValue :: BinTree a -> a
         nodeValue (Node a _ _) = a
+        children Empty = []
         children (Node _ Empty Empty) = []
         children (Node _ Empty b) = [b]
         children (Node _ a Empty) = [a]

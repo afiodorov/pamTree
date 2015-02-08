@@ -3,7 +3,9 @@ import Data.Monoid
 import Control.Applicative
 import Control.Monad.IO.Class
 import Data.Random.RVar
-import Data.Random.Distribution.Uniform (stdUniform)
+import Data.Random.Distribution (Distribution)
+import Data.Random.Distribution.Uniform (StdUniform)
+import Data.Random.Distribution.Exponential (exponential, Exponential)
 import Data.Random.Sample (sample)
 import Data.Random.Source.IO
 import Data.Traversable (sequence)
@@ -34,8 +36,15 @@ initial = treeFromList $ 1 : repeat 0
 runModel :: (Num a) => Int -> BinTree a -> BinTree a -> BinTree a
 runModel times potential  = foldr (.) id (replicate times (runTimeStep potential))
 
+weibull :: Double -> RVar Double
+weibull k = (**(1/k)) <$> exponential 1
+
+distribution = weibull 3
+treeSize = 4
+
 main :: IO ()
 main = do
-    potential <- sequence . subTree 10  . treeFromList $ (repeat (sample stdUniform) :: [IO Double])
-    print . subTree 2 $ potential
-    print . subTree 2 $ runModel 15 potential initial
+    potential <- sequence . subTree treeSize
+        . treeFromList . repeat $ (sample distribution :: IO Double)
+    print . subTree treeSize $ potential
+    print . subTree treeSize $ runModel 15 potential initial

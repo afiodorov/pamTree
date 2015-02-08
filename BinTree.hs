@@ -55,7 +55,6 @@ subTree n (Node x l r) = Node x (subTree (n-1) l) (subTree (n-1) r)
 instance (Show a) => Show (BinTree a) where
     show t = show' 0 treeList
         where
-            maxDepth = 5
             treeList :: [String]
             treeList = map show (listFromTree t)
             showDepth :: Int -> [String] -> String
@@ -64,7 +63,6 @@ instance (Show a) => Show (BinTree a) where
             show' :: Int -> [String] -> String
             show' depth treeList
                 | fstIndx depth > length treeList = ""
-                | depth > maxDepth = "..."
                 | otherwise        = showDepth depth treeList
                     ++ show' (depth + 1) treeList
 

@@ -1,13 +1,11 @@
 import BinTree (BinTree (Node, Empty), treeFromList, subTree)
 import Data.Monoid
 import Control.Applicative
-import Control.Monad.IO.Class
+import Control.Monad.IO.Class()
 import Data.Random.RVar
-import Data.Random.Distribution (Distribution)
-import Data.Random.Distribution.Uniform (StdUniform)
-import Data.Random.Distribution.Exponential (exponential, Exponential)
+import Data.Random.Distribution.Exponential (exponential)
 import Data.Random.Sample (sample)
-import Data.Random.Source.IO
+import Data.Random.Source.IO()
 import Data.Traversable (sequence)
 import Prelude hiding (sequence)
 
@@ -19,12 +17,12 @@ mconcatNeighs :: (Monoid a) => BinTree a -> BinTree a
 mconcatNeighs = mconcatNeighs' mempty
 
 mconcatNeighs' :: (Monoid a) => a -> BinTree a -> BinTree a
-mconcatNeighs' parentVal Empty = Empty
+mconcatNeighs' _ Empty = Empty
 mconcatNeighs' parentVal (Node x l r) = Node
     (mconcat [parentVal,  nodeVal l, nodeVal r]) (mconcatNeighs' x l) (mconcatNeighs' x r)
     where
         nodeVal :: (Monoid a) => BinTree a -> a
-        nodeVal (Node x _ _) = x
+        nodeVal (Node y _ _) = y
         nodeVal Empty = mempty
 
 runTimeStep :: (Fractional a) => BinTree a -> BinTree a -> BinTree a
@@ -34,16 +32,20 @@ runTimeStep potential t = (+) <$> delta <*> t
             where rescaledByPotential = (*) <$> potential <*> t
         timeStep = 0.1
 
-initial = treeFromList $ 1 : repeat 0
-
 runModel :: (Fractional a) => Int -> BinTree a -> BinTree a -> BinTree a
 runModel times potential  = foldr (.) id (replicate times (runTimeStep potential))
 
 weibull :: Double -> RVar Double
 weibull k = (**(1/k)) <$> exponential 1
 
+initial :: BinTree Double
+initial = treeFromList $ 1 : repeat 0
+
+distribution :: RVar Double
 distribution = weibull 3
+treeSize :: Int
 treeSize = 7
+modelRunNum :: Int
 modelRunNum = 30
 
 main :: IO ()
